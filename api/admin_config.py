@@ -118,20 +118,6 @@ SECTIONS: tuple[ConfigSectionSpec, ...] = (
 
 FIELDS: tuple[ConfigFieldSpec, ...] = (
     ConfigFieldSpec(
-        "ANTHROPIC_OAUTH_TOKEN",
-        "Anthropic Account Token (setup-token)",
-        "providers",
-        "secret",
-        settings_attr="anthropic_oauth_token",
-        secret=True,
-        description=(
-            "Claude account OAuth access token from `claude setup-token` (Pro/Max "
-            "subscription). Routes to the official Anthropic API instead of a paid "
-            "console API key. Use models prefixed `anthropic/` (e.g. "
-            "anthropic/claude-sonnet-4-6)."
-        ),
-    ),
-    ConfigFieldSpec(
         "NVIDIA_NIM_API_KEY",
         "NVIDIA NIM API Key",
         "providers",
@@ -206,16 +192,6 @@ FIELDS: tuple[ConfigFieldSpec, ...] = (
         "secret",
         settings_attr="kimi_api_key",
         secret=True,
-    ),
-    ConfigFieldSpec(
-        "KIMI_OAUTH_TOKEN",
-        "Kimi Account Token",
-        "providers",
-        "secret",
-        settings_attr="kimi_oauth_token",
-        secret=True,
-        advanced=True,
-        description="Optional account/OAuth token; used instead of the API key above when set.",
     ),
     ConfigFieldSpec(
         "WAFER_API_KEY",

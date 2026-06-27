@@ -30,7 +30,10 @@ def test_anthropic_provider_in_catalog_uses_oauth() -> None:
     desc = PROVIDER_CATALOG["anthropic"]
     assert desc.auth_scheme == "oauth"
     assert desc.oauth_beta == ANTHROPIC_OAUTH_BETA
-    assert desc.credential_env == "ANTHROPIC_OAUTH_TOKEN"
+    # No credential_env / admin field: token comes from `claude /login` at runtime.
+    assert desc.credential_env is None
+    assert desc.credential_optional is True
+    assert desc.credential_attr == "anthropic_oauth_token"  # optional .env override
     assert desc.default_base_url == "https://api.anthropic.com/v1"
 
 

@@ -97,13 +97,11 @@ PROVIDER_CATALOG: dict[str, ProviderDescriptor] = {
     "anthropic": ProviderDescriptor(
         provider_id="anthropic",
         transport_type="anthropic_messages",
-        # Default credential is the Claude *account* OAuth token the ``claude`` CLI
-        # stores after a browser ``/login`` (Pro/Max subscription) — auto-refreshed,
-        # NOT a paid console API key. ``ANTHROPIC_OAUTH_TOKEN`` (a ``claude
-        # setup-token``) is an optional static override; when both are absent the
-        # provider reads the login file, so the credential is optional here.
-        credential_env="ANTHROPIC_OAUTH_TOKEN",
-        credential_url="run `claude /login` (or `claude setup-token`); needs a Pro/Max subscription",
+        # Credential is the Claude *account* OAuth token the ``claude`` CLI stores
+        # after a browser ``/login`` (Pro/Max subscription) — auto-refreshed, NOT a
+        # paid console API key and NOT an admin-UI field. ``ANTHROPIC_OAUTH_TOKEN``
+        # (a ``claude setup-token``) stays supported as an optional .env override via
+        # ``credential_attr``; with no env var here the credential is optional.
         credential_attr="anthropic_oauth_token",
         credential_optional=True,
         default_base_url=ANTHROPIC_DEFAULT_BASE,

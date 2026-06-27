@@ -337,7 +337,9 @@ def _model_list_provider_ids_for_settings(settings: Settings) -> tuple[str, ...]
     referenced_provider_ids = _referenced_provider_ids(settings)
     provider_ids: list[str] = []
     for provider_id, descriptor in PROVIDER_DESCRIPTORS.items():
-        if descriptor.static_credential is not None:
+        # Providers that self-source a token at runtime (static credential or a
+        # browser-login file) are only worth querying when actually referenced.
+        if descriptor.static_credential is not None or descriptor.credential_optional:
             if provider_id in referenced_provider_ids:
                 provider_ids.append(provider_id)
             continue
