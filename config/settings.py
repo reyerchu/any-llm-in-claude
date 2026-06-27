@@ -78,10 +78,16 @@ class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
     # ==================== Anthropic Account (setup-token / OAuth) ====================
-    # Claude *account* OAuth access token from ``claude setup-token`` (Pro/Max
-    # subscription) — used in place of a paid console API key.
+    # Optional static override: a Claude *account* OAuth access token from
+    # ``claude setup-token``. When empty, the anthropic provider reads + auto-refreshes
+    # the token the ``claude`` CLI stores after a browser ``/login`` (see path below).
     anthropic_oauth_token: str = Field(
         default="", validation_alias="ANTHROPIC_OAUTH_TOKEN"
+    )
+    # Path to the Claude Code browser-login credentials JSON (auto-refreshing OAuth).
+    claude_credentials_path: str = Field(
+        default="~/.claude/.credentials.json",
+        validation_alias="CLAUDE_CREDENTIALS_PATH",
     )
 
     # ==================== OpenRouter Config ====================

@@ -76,8 +76,30 @@ def test_api_key_only_keeps_api_key_scheme() -> None:
     assert config.oauth_beta is None
 
 
-def test_missing_anthropic_token_raises_helpful_error() -> None:
+def test_anthropic_static_token_overrides_login_file() -> None:
+    # A configured setup-token is used verbatim (no browser-login file read).
+    provider = create_provider(
+        "anthropic", _settings(ANTHROPIC_OAUTH_TOKEN="sk-ant-oat01-STATIC")
+    )
+    assert provider._static_token == "sk-ant-oat01-STATIC"
+    assert provider._store is None
+
+
+def test_anthropic_without_token_uses_login_file_store() -> None:
+    # No setup-token configured -> provider sources the auto-refreshing login file.
+    provider = create_provider("anthropic", _settings())
+    assert provider._static_token == ""
+    assert provider._store is not None  # reads ~/.claude/.credentials.json
+
+
+@pytest.mark.asyncio
+async def test_missing_login_file_raises_helpful_error(tmp_path) -> None:
     from providers.exceptions import AuthenticationError
 
-    with pytest.raises(AuthenticationError, match="ANTHROPIC_OAUTH_TOKEN"):
-        create_provider("anthropic", _settings())
+    provider = create_provider(
+        "anthropic",
+        _settings(CLAUDE_CREDENTIALS_PATH=str(tmp_path / "nope.json")),
+    )
+    with pytest.raises(AuthenticationError, match="Claude login credentials not found"):
+        await provider._refresh_credential()
+    await provider.cleanup()

@@ -17,8 +17,14 @@ TransportType = Literal["openai_chat", "anthropic_messages"]
 AuthScheme = Literal["api_key", "oauth"]
 
 # OAuth beta flag Anthropic requires when authenticating with a subscription
-# (``claude setup-token``) access token instead of an API key.
+# (``claude setup-token`` / ``claude /login``) access token instead of an API key.
 ANTHROPIC_OAUTH_BETA = "oauth-2025-04-20"
+# Anthropic OAuth refresh endpoint + public Claude Code client id (used to refresh
+# the access token the ``claude`` CLI stores after a browser ``/login``).
+ANTHROPIC_OAUTH_TOKEN_URL = "https://platform.claude.com/v1/oauth/token"
+ANTHROPIC_OAUTH_CLIENT_ID = "9d1c250a-e61b-44d9-88ed-5944d1962f5e"
+# Default location of the Claude Code browser-login credentials JSON.
+CLAUDE_CODE_DEFAULT_CREDENTIALS_PATH = "~/.claude/.credentials.json"
 
 # Default upstream base URLs (also re-exported via :mod:`providers.defaults`)
 # Official Anthropic Messages API — used with a Claude account ``setup-token`` OAuth
@@ -82,17 +88,24 @@ class ProviderDescriptor:
     auth_scheme: AuthScheme = "api_key"
     # ``anthropic-beta`` flag to add when authenticating via an OAuth account token.
     oauth_beta: str | None = None
+    # When True, an empty configured credential is allowed because the provider
+    # sources its token elsewhere at runtime (e.g. reads a browser-login file).
+    credential_optional: bool = False
 
 
 PROVIDER_CATALOG: dict[str, ProviderDescriptor] = {
     "anthropic": ProviderDescriptor(
         provider_id="anthropic",
         transport_type="anthropic_messages",
-        # Primary credential is a Claude *account* OAuth token from ``claude
-        # setup-token`` (Pro/Max subscription) — NOT a paid console API key.
+        # Default credential is the Claude *account* OAuth token the ``claude`` CLI
+        # stores after a browser ``/login`` (Pro/Max subscription) — auto-refreshed,
+        # NOT a paid console API key. ``ANTHROPIC_OAUTH_TOKEN`` (a ``claude
+        # setup-token``) is an optional static override; when both are absent the
+        # provider reads the login file, so the credential is optional here.
         credential_env="ANTHROPIC_OAUTH_TOKEN",
-        credential_url="run `claude setup-token` (needs a Claude Pro/Max subscription)",
+        credential_url="run `claude /login` (or `claude setup-token`); needs a Pro/Max subscription",
         credential_attr="anthropic_oauth_token",
+        credential_optional=True,
         default_base_url=ANTHROPIC_DEFAULT_BASE,
         proxy_attr="anthropic_proxy",
         auth_scheme="oauth",

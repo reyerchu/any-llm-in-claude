@@ -32,10 +32,10 @@ ProviderFactory = Callable[[ProviderConfig, Settings], BaseProvider]
 PROVIDER_DESCRIPTORS: dict[str, ProviderDescriptor] = PROVIDER_CATALOG
 
 
-def _create_anthropic(config: ProviderConfig, _settings: Settings) -> BaseProvider:
+def _create_anthropic(config: ProviderConfig, settings: Settings) -> BaseProvider:
     from providers.anthropic import AnthropicProvider
 
-    return AnthropicProvider(config)
+    return AnthropicProvider(config, credentials_path=settings.claude_credentials_path)
 
 
 def _create_nvidia_nim(config: ProviderConfig, settings: Settings) -> BaseProvider:
@@ -227,6 +227,9 @@ def _resolved_auth_scheme(descriptor: ProviderDescriptor, settings: Settings) ->
 
 def _require_credential(descriptor: ProviderDescriptor, credential: str) -> None:
     if descriptor.credential_env is None:
+        return
+    if descriptor.credential_optional:
+        # Provider sources its token at runtime (e.g. a browser-login file).
         return
     if credential and credential.strip():
         return

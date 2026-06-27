@@ -162,13 +162,13 @@ Pick one provider, enter its key or local URL in the Admin UI, and set `MODEL` t
 
 This fork ([`any-llm-in-claude`](https://github.com/reyerchu/any-llm-in-claude)) adds the ability to authenticate with an LLM **account** access token instead of a paid console API key.
 
-**Your Claude subscription (Pro/Max) via `setup-token`.** Run the official command once and paste the resulting `sk-ant-oat...` token into `ANTHROPIC_OAUTH_TOKEN` (Admin UI → *Anthropic Account Token*):
+**Your Claude subscription (Pro/Max) — just `claude /login`, no token to paste.** If you have already logged into the `claude` CLI (`claude` → `/login`, browser OAuth), the `anthropic` provider reads the account token the CLI stores at `~/.claude/.credentials.json` and **auto-refreshes** it before each request — nothing to configure. (Alternatively, paste a `claude setup-token` into `ANTHROPIC_OAUTH_TOKEN` / Admin UI → *Anthropic Account Token* as a static override; override path via `CLAUDE_CREDENTIALS_PATH`.)
 
 ```bash
-claude setup-token   # prints an OAuth token tied to your Pro/Max subscription
+claude /login        # browser OAuth on your Pro/Max subscription (one time)
 ```
 
-Then route to the new `anthropic` provider, which talks to the official Anthropic API on your subscription:
+Then route to the `anthropic` provider, which talks to the official Anthropic API on your subscription:
 
 ```bash
 MODEL="anthropic/claude-sonnet-4-6"
