@@ -94,6 +94,14 @@ def _create_kimi(config: ProviderConfig, _settings: Settings) -> BaseProvider:
     return KimiProvider(config)
 
 
+def _create_kimi_code(config: ProviderConfig, settings: Settings) -> BaseProvider:
+    from providers.kimi_code import KimiCodeProvider
+
+    return KimiCodeProvider(
+        config, credentials_path=settings.kimi_code_credentials_path
+    )
+
+
 def _create_wafer(config: ProviderConfig, _settings: Settings) -> BaseProvider:
     from providers.wafer import WaferProvider
 
@@ -154,6 +162,7 @@ PROVIDER_FACTORIES: dict[str, ProviderFactory] = {
     "opencode_go": _create_opencode_go,
     "wafer": _create_wafer,
     "kimi": _create_kimi,
+    "kimi_code": _create_kimi_code,
     "cerebras": _create_cerebras,
     "groq": _create_groq,
     "fireworks": _create_fireworks,

@@ -16,6 +16,7 @@ _EXPECTED_PROVIDER_ORDER: tuple[str, ...] = (
     "opencode_go",
     "wafer",
     "kimi",
+    "kimi_code",
     "cerebras",
     "groq",
     "fireworks",

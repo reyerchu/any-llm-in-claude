@@ -179,6 +179,14 @@ MODEL_HAIKU="anthropic/claude-haiku-4-5-20251001"
 
 The proxy sends the token as `Authorization: Bearer` with the `anthropic-beta: oauth-2025-04-20` flag and the Claude Code identity, exactly like the official CLI — no `x-api-key`, no console billing.
 
+**Your Kimi Code subscription (`kimi` CLI login, auto-refreshing).** If you use the [`kimi`](https://moonshotai.github.io/kimi-code/) CLI, log in once (`kimi`) and select the `kimi_code` provider — no token to paste. It reads the OAuth account token the CLI stores at `~/.kimi-code/credentials/kimi-code.json`, **auto-refreshes** it before each request (the token lives ~15 min), and talks to the Kimi Code coding endpoint:
+
+```bash
+MODEL="kimi_code/kimi-for-coding"   # K2.7 Code, on your subscription
+# Optional, if your credentials live elsewhere:
+# KIMI_CODE_CREDENTIALS_PATH="/path/to/kimi-code.json"
+```
+
 **Any other provider's account token.** Set `<PROVIDER>_OAUTH_TOKEN` to use an account/login token in place of `<PROVIDER>_API_KEY`. When present it wins over the API key and is sent as a Bearer token. Supported today: `KIMI_OAUTH_TOKEN`, `OPENROUTER_OAUTH_TOKEN`, `DEEPSEEK_OAUTH_TOKEN`, `WAFER_OAUTH_TOKEN`, `FIREWORKS_OAUTH_TOKEN`, `ZAI_OAUTH_TOKEN`.
 
 ```bash

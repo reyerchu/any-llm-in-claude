@@ -108,6 +108,14 @@ class Settings(BaseSettings):
     # Kimi (Moonshot) account access token — used instead of the API key when set.
     kimi_oauth_token: str = Field(default="", validation_alias="KIMI_OAUTH_TOKEN")
 
+    # ==================== Kimi Code (subscription OAuth, self-refreshing) ====================
+    # Path to the OAuth credentials JSON written by the `kimi` CLI. The kimi_code
+    # provider reads + auto-refreshes this token; there is no API key to set.
+    kimi_code_credentials_path: str = Field(
+        default="~/.kimi-code/credentials/kimi-code.json",
+        validation_alias="KIMI_CODE_CREDENTIALS_PATH",
+    )
+
     # ==================== Wafer Config ====================
     wafer_api_key: str = Field(default="", validation_alias="WAFER_API_KEY")
     wafer_oauth_token: str = Field(default="", validation_alias="WAFER_OAUTH_TOKEN")

@@ -27,6 +27,13 @@ ANTHROPIC_DEFAULT_BASE = "https://api.anthropic.com/v1"
 NVIDIA_NIM_DEFAULT_BASE = "https://integrate.api.nvidia.com/v1"
 # Moonshot Kimi Anthropic-compatible Messages API (POST …/messages).
 KIMI_DEFAULT_BASE = "https://api.moonshot.ai/anthropic/v1"
+# Kimi Code (`kimi` CLI subscription) Anthropic-compatible coding endpoint. Auth is a
+# self-refreshing OAuth account token stored by the `kimi` CLI — NOT a console API key.
+KIMI_CODE_DEFAULT_BASE = "https://api.kimi.com/coding/v1"
+KIMI_CODE_AUTH_TOKEN_URL = "https://auth.kimi.com/api/oauth/token"
+KIMI_CODE_CLIENT_ID = "17e5f671-d194-4dfb-9706-5516cb48c098"
+# Default location where the `kimi` CLI stores its OAuth credentials JSON.
+KIMI_CODE_DEFAULT_CREDENTIALS_PATH = "~/.kimi-code/credentials/kimi-code.json"
 WAFER_DEFAULT_BASE = "https://pass.wafer.ai/v1"
 # DeepSeek Anthropic-compatible Messages API (not OpenAI ``/v1`` chat completions).
 DEEPSEEK_ANTHROPIC_DEFAULT_BASE = "https://api.deepseek.com/anthropic"
@@ -211,6 +218,25 @@ PROVIDER_CATALOG: dict[str, ProviderDescriptor] = {
             "tools",
             "thinking",
             "native_anthropic",
+        ),
+    ),
+    "kimi_code": ProviderDescriptor(
+        provider_id="kimi_code",
+        transport_type="anthropic_messages",
+        # No API key: credential is a self-refreshing OAuth account token the `kimi`
+        # CLI stores on disk. The provider reads + refreshes it; nothing to configure.
+        static_credential="kimi-code-oauth",
+        credential_url="run `kimi` and log in (Kimi Code subscription)",
+        default_base_url=KIMI_CODE_DEFAULT_BASE,
+        auth_scheme="oauth",
+        oauth_beta=ANTHROPIC_OAUTH_BETA,
+        capabilities=(
+            "chat",
+            "streaming",
+            "tools",
+            "thinking",
+            "native_anthropic",
+            "oauth",
         ),
     ),
     "cerebras": ProviderDescriptor(
