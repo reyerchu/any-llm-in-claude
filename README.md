@@ -14,9 +14,11 @@ Use Claude Code CLI, Codex CLI, their VS Code extensions, JetBrains ACP, or chat
 
 Free Claude Code routes Anthropic Messages API traffic from Claude Code (CLI and VS Code extension) and OpenAI Responses API traffic from Codex (CLI and VS Code extension) to any provider. It keeps each client's protocol stable while letting you choose free, paid, or local models through the same proxy and Admin UI.
 
-[Quick Start](#quick-start) · [Providers](#choose-a-provider) · [Clients](#connect-your-client) · [Integrations](#optional-integrations) · [Development](#development)
+[Quick Start](#quick-start) · [Account Tokens](#account-tokens) · [Providers](#choose-a-provider) · [Clients](#connect-your-client) · [Integrations](#optional-integrations) · [Development](#development)
 
 </div>
+
+> **`any-llm-in-claude`** — a fork of [Alishahryar1/free-claude-code](https://github.com/Alishahryar1/free-claude-code) that adds **account-token / setup-token auth**: drive Claude Code with your **Claude Pro/Max subscription** (`claude setup-token`), a **Kimi account token**, or any LLM **account token** instead of a paid API key. See [Use an account token instead of an API key](#account-tokens).
 
 <div align="center">
   <img src="assets/pic.png" alt="Free Claude Code in action" width="700">
@@ -153,6 +155,39 @@ fcc-codex
 ## Choose A Provider
 
 Pick one provider, enter its key or local URL in the Admin UI, and set `MODEL` to a provider-prefixed model slug. `MODEL` is the fallback. `MODEL_OPUS`, `MODEL_SONNET`, and `MODEL_HAIKU` can override routing for Claude Code's model tiers.
+
+<a id="account-tokens"></a>
+
+### 0. Use an account token instead of an API key (no API key required)
+
+This fork ([`any-llm-in-claude`](https://github.com/reyerchu/any-llm-in-claude)) adds the ability to authenticate with an LLM **account** access token instead of a paid console API key.
+
+**Your Claude subscription (Pro/Max) via `setup-token`.** Run the official command once and paste the resulting `sk-ant-oat...` token into `ANTHROPIC_OAUTH_TOKEN` (Admin UI → *Anthropic Account Token*):
+
+```bash
+claude setup-token   # prints an OAuth token tied to your Pro/Max subscription
+```
+
+Then route to the new `anthropic` provider, which talks to the official Anthropic API on your subscription:
+
+```bash
+MODEL="anthropic/claude-sonnet-4-6"
+# or mix tiers:
+MODEL_OPUS="anthropic/claude-opus-4-8"
+MODEL_HAIKU="anthropic/claude-haiku-4-5-20251001"
+```
+
+The proxy sends the token as `Authorization: Bearer` with the `anthropic-beta: oauth-2025-04-20` flag and the Claude Code identity, exactly like the official CLI — no `x-api-key`, no console billing.
+
+**Any other provider's account token.** Set `<PROVIDER>_OAUTH_TOKEN` to use an account/login token in place of `<PROVIDER>_API_KEY`. When present it wins over the API key and is sent as a Bearer token. Supported today: `KIMI_OAUTH_TOKEN`, `OPENROUTER_OAUTH_TOKEN`, `DEEPSEEK_OAUTH_TOKEN`, `WAFER_OAUTH_TOKEN`, `FIREWORKS_OAUTH_TOKEN`, `ZAI_OAUTH_TOKEN`.
+
+```bash
+# Example: log in to Kimi (Moonshot) with an account token, then:
+KIMI_OAUTH_TOKEN="..."
+MODEL="kimi/kimi-k2.7-code"
+```
+
+> Account tokens are stored locally (same as API keys) and are subject to each provider's own terms of service.
 
 <a id="nvidia-nim-provider"></a>
 

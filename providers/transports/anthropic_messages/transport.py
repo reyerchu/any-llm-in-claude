@@ -50,6 +50,8 @@ class AnthropicMessagesTransport(BaseProvider):
         super().__init__(config)
         self._provider_name = provider_name
         self._api_key = config.api_key
+        self._auth_scheme = config.auth_scheme
+        self._oauth_beta = config.oauth_beta
         self._base_url = (config.base_url or default_base_url).rstrip("/")
         self._global_rate_limiter = GlobalRateLimiter.get_scoped_instance(
             provider_name.lower(),
@@ -89,12 +91,33 @@ class AnthropicMessagesTransport(BaseProvider):
         """Query the provider endpoint that advertises available model ids."""
         return await self._client.get(
             "/models",
-            headers=self._model_list_headers(),
+            headers=self._apply_oauth_headers(self._model_list_headers()),
         )
 
     def _model_list_headers(self) -> dict[str, str]:
         """Return headers for model-list requests."""
         return {}
+
+    def _apply_oauth_headers(self, headers: dict[str, str]) -> dict[str, str]:
+        """Rewrite headers to authenticate with an account/OAuth token when active.
+
+        When ``auth_scheme == "oauth"`` the credential is an LLM *account* access
+        token (e.g. ``claude setup-token``): it must be sent as ``Authorization:
+        Bearer`` (never ``x-api-key``), optionally with an ``anthropic-beta`` OAuth
+        flag. For the default ``api_key`` scheme the provider's own headers are kept.
+        """
+        if self._auth_scheme != "oauth":
+            return headers
+        result = dict(headers)
+        result.pop("x-api-key", None)
+        result["Authorization"] = f"Bearer {self._api_key}"
+        if self._oauth_beta:
+            existing = result.get("anthropic-beta")
+            betas = [b for b in (existing, self._oauth_beta) if b]
+            result["anthropic-beta"] = ",".join(
+                dict.fromkeys(",".join(betas).split(","))
+            )
+        return result
 
     def _extract_model_ids_from_model_list_payload(
         self, payload: Any
@@ -140,7 +163,7 @@ class AnthropicMessagesTransport(BaseProvider):
             "POST",
             "/messages",
             json=body,
-            headers=self._request_headers(),
+            headers=self._apply_oauth_headers(self._request_headers()),
         )
         return await self._client.send(request, stream=True)
 

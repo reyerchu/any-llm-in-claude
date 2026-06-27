@@ -19,6 +19,11 @@ class ProviderConfig(BaseModel):
 
     api_key: str
     base_url: str | None = None
+    # Authentication scheme: "api_key" (provider API key) or "oauth" (an LLM
+    # *account* access token, e.g. ``claude setup-token``, sent as a Bearer token).
+    auth_scheme: str = "api_key"
+    # ``anthropic-beta`` flag to add when ``auth_scheme == "oauth"`` (Anthropic only).
+    oauth_beta: str | None = None
     rate_limit: int | None = None
     rate_window: int = 60
     max_concurrency: int = 5

@@ -77,8 +77,19 @@ def _env_file_override(model_config: Mapping[str, Any], key: str) -> str | None:
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
+    # ==================== Anthropic Account (setup-token / OAuth) ====================
+    # Claude *account* OAuth access token from ``claude setup-token`` (Pro/Max
+    # subscription) — used in place of a paid console API key.
+    anthropic_oauth_token: str = Field(
+        default="", validation_alias="ANTHROPIC_OAUTH_TOKEN"
+    )
+
     # ==================== OpenRouter Config ====================
     open_router_api_key: str = Field(default="", validation_alias="OPENROUTER_API_KEY")
+    # Optional account/OAuth token override (used instead of the API key when set).
+    open_router_oauth_token: str = Field(
+        default="", validation_alias="OPENROUTER_OAUTH_TOKEN"
+    )
 
     # ==================== Mistral La Plateforme ====================
     mistral_api_key: str = Field(default="", validation_alias="MISTRAL_API_KEY")
@@ -88,12 +99,18 @@ class Settings(BaseSettings):
 
     # ==================== DeepSeek Config ====================
     deepseek_api_key: str = Field(default="", validation_alias="DEEPSEEK_API_KEY")
+    deepseek_oauth_token: str = Field(
+        default="", validation_alias="DEEPSEEK_OAUTH_TOKEN"
+    )
 
     # ==================== Kimi Config ====================
     kimi_api_key: str = Field(default="", validation_alias="KIMI_API_KEY")
+    # Kimi (Moonshot) account access token — used instead of the API key when set.
+    kimi_oauth_token: str = Field(default="", validation_alias="KIMI_OAUTH_TOKEN")
 
     # ==================== Wafer Config ====================
     wafer_api_key: str = Field(default="", validation_alias="WAFER_API_KEY")
+    wafer_oauth_token: str = Field(default="", validation_alias="WAFER_OAUTH_TOKEN")
 
     # ==================== OpenCode Zen / OpenCode Go ====================
     # Same key from opencode.ai/auth; zen uses prefix ``opencode/``, Go uses ``opencode_go/``.
@@ -101,9 +118,13 @@ class Settings(BaseSettings):
 
     # ==================== Z.ai Config ====================
     zai_api_key: str = Field(default="", validation_alias="ZAI_API_KEY")
+    zai_oauth_token: str = Field(default="", validation_alias="ZAI_OAUTH_TOKEN")
 
     # ==================== Fireworks AI Config ====================
     fireworks_api_key: str = Field(default="", validation_alias="FIREWORKS_API_KEY")
+    fireworks_oauth_token: str = Field(
+        default="", validation_alias="FIREWORKS_OAUTH_TOKEN"
+    )
 
     # ==================== Google Gemini (Google AI Studio) ====================
     gemini_api_key: str = Field(default="", validation_alias="GEMINI_API_KEY")
@@ -159,6 +180,7 @@ class Settings(BaseSettings):
     model_haiku: str | None = Field(default=None, validation_alias="MODEL_HAIKU")
 
     # ==================== Per-Provider Proxy ====================
+    anthropic_proxy: str = Field(default="", validation_alias="ANTHROPIC_PROXY")
     nvidia_nim_proxy: str = Field(default="", validation_alias="NVIDIA_NIM_PROXY")
     open_router_proxy: str = Field(default="", validation_alias="OPENROUTER_PROXY")
     mistral_proxy: str = Field(default="", validation_alias="MISTRAL_PROXY")

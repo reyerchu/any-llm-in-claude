@@ -32,6 +32,12 @@ ProviderFactory = Callable[[ProviderConfig, Settings], BaseProvider]
 PROVIDER_DESCRIPTORS: dict[str, ProviderDescriptor] = PROVIDER_CATALOG
 
 
+def _create_anthropic(config: ProviderConfig, _settings: Settings) -> BaseProvider:
+    from providers.anthropic import AnthropicProvider
+
+    return AnthropicProvider(config)
+
+
 def _create_nvidia_nim(config: ProviderConfig, settings: Settings) -> BaseProvider:
     from providers.nvidia_nim import NvidiaNimProvider
 
@@ -137,6 +143,7 @@ def _create_cerebras(config: ProviderConfig, _settings: Settings) -> BaseProvide
 
 
 PROVIDER_FACTORIES: dict[str, ProviderFactory] = {
+    "anthropic": _create_anthropic,
     "nvidia_nim": _create_nvidia_nim,
     "open_router": _create_open_router,
     "gemini": _create_gemini,
@@ -173,7 +180,14 @@ def _string_attr(settings: Settings, attr_name: str | None, default: str = "") -
     return value if isinstance(value, str) else default
 
 
-def _credential_for(descriptor: ProviderDescriptor, settings: Settings) -> str:
+def _oauth_token_for(descriptor: ProviderDescriptor, settings: Settings) -> str:
+    """Return the configured account/OAuth access token, if any (empty otherwise)."""
+    if descriptor.oauth_attr:
+        return _string_attr(settings, descriptor.oauth_attr).strip()
+    return ""
+
+
+def _api_key_for(descriptor: ProviderDescriptor, settings: Settings) -> str:
     if descriptor.static_credential is not None:
         return descriptor.static_credential
     if descriptor.credential_attr:
@@ -181,14 +195,46 @@ def _credential_for(descriptor: ProviderDescriptor, settings: Settings) -> str:
     return ""
 
 
+def _credential_for(descriptor: ProviderDescriptor, settings: Settings) -> str:
+    """Return the effective credential, preferring an account/OAuth token.
+
+    An account token (``oauth_attr``) takes precedence over the API key. For
+    providers whose *primary* credential is itself an OAuth token (``auth_scheme
+    == "oauth"``, e.g. ``anthropic`` via ``claude setup-token``) the API-key slot
+    already holds that token.
+    """
+    oauth_token = _oauth_token_for(descriptor, settings)
+    if oauth_token:
+        return oauth_token
+    return _api_key_for(descriptor, settings)
+
+
+def _resolved_auth_scheme(descriptor: ProviderDescriptor, settings: Settings) -> str:
+    """Return "oauth" when an account token is in use, else the descriptor default."""
+    if _oauth_token_for(descriptor, settings):
+        return "oauth"
+    return descriptor.auth_scheme
+
+
 def _require_credential(descriptor: ProviderDescriptor, credential: str) -> None:
     if descriptor.credential_env is None:
         return
     if credential and credential.strip():
         return
-    message = f"{descriptor.credential_env} is not set. Add it to your .env file."
+    if descriptor.auth_scheme == "oauth":
+        message = (
+            f"{descriptor.credential_env} is not set. Add your account token to "
+            "your .env file."
+        )
+    else:
+        message = f"{descriptor.credential_env} is not set. Add it to your .env file."
+        if descriptor.oauth_env:
+            message = (
+                f"{message} (Or set {descriptor.oauth_env} to use an account token "
+                "instead of an API key.)"
+            )
     if descriptor.credential_url:
-        message = f"{message} Get a key at {descriptor.credential_url}"
+        message = f"{message} Get a credential at {descriptor.credential_url}"
     raise AuthenticationError(message)
 
 
@@ -197,6 +243,7 @@ def build_provider_config(
 ) -> ProviderConfig:
     credential = _credential_for(descriptor, settings)
     _require_credential(descriptor, credential)
+    auth_scheme = _resolved_auth_scheme(descriptor, settings)
     base_url = _string_attr(
         settings, descriptor.base_url_attr, descriptor.default_base_url or ""
     )
@@ -204,6 +251,8 @@ def build_provider_config(
     return ProviderConfig(
         api_key=credential,
         base_url=base_url or descriptor.default_base_url,
+        auth_scheme=auth_scheme,
+        oauth_beta=descriptor.oauth_beta if auth_scheme == "oauth" else None,
         rate_limit=settings.provider_rate_limit,
         rate_window=settings.provider_rate_window,
         max_concurrency=settings.provider_max_concurrency,

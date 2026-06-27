@@ -10,8 +10,20 @@ from dataclasses import dataclass
 from typing import Literal
 
 TransportType = Literal["openai_chat", "anthropic_messages"]
+# How a provider authenticates upstream. ``api_key`` is the default (provider API
+# key in the native ``x-api-key`` / ``Authorization: Bearer`` slot). ``oauth`` uses
+# an *account* access token (e.g. ``claude setup-token`` for Anthropic) sent as a
+# ``Authorization: Bearer`` token, optionally with an ``anthropic-beta`` OAuth flag.
+AuthScheme = Literal["api_key", "oauth"]
+
+# OAuth beta flag Anthropic requires when authenticating with a subscription
+# (``claude setup-token``) access token instead of an API key.
+ANTHROPIC_OAUTH_BETA = "oauth-2025-04-20"
 
 # Default upstream base URLs (also re-exported via :mod:`providers.defaults`)
+# Official Anthropic Messages API — used with a Claude account ``setup-token`` OAuth
+# access token (Pro/Max subscription) instead of a paid ``x-api-key``.
+ANTHROPIC_DEFAULT_BASE = "https://api.anthropic.com/v1"
 NVIDIA_NIM_DEFAULT_BASE = "https://integrate.api.nvidia.com/v1"
 # Moonshot Kimi Anthropic-compatible Messages API (POST …/messages).
 KIMI_DEFAULT_BASE = "https://api.moonshot.ai/anthropic/v1"
@@ -52,9 +64,42 @@ class ProviderDescriptor:
     default_base_url: str | None = None
     base_url_attr: str | None = None
     proxy_attr: str | None = None
+    # Account-token / OAuth (use an LLM *account* token instead of an API key).
+    # ``oauth_env`` / ``oauth_attr`` name the env var and Settings attribute holding
+    # the account access token. When that token is set it takes precedence over the
+    # API key and the request is authenticated as ``auth_scheme="oauth"`` (Bearer).
+    oauth_env: str | None = None
+    oauth_attr: str | None = None
+    # When the descriptor's *primary* credential is itself an OAuth account token
+    # (no API-key alternative, e.g. the ``anthropic`` setup-token provider).
+    auth_scheme: AuthScheme = "api_key"
+    # ``anthropic-beta`` flag to add when authenticating via an OAuth account token.
+    oauth_beta: str | None = None
 
 
 PROVIDER_CATALOG: dict[str, ProviderDescriptor] = {
+    "anthropic": ProviderDescriptor(
+        provider_id="anthropic",
+        transport_type="anthropic_messages",
+        # Primary credential is a Claude *account* OAuth token from ``claude
+        # setup-token`` (Pro/Max subscription) — NOT a paid console API key.
+        credential_env="ANTHROPIC_OAUTH_TOKEN",
+        credential_url="run `claude setup-token` (needs a Claude Pro/Max subscription)",
+        credential_attr="anthropic_oauth_token",
+        default_base_url=ANTHROPIC_DEFAULT_BASE,
+        proxy_attr="anthropic_proxy",
+        auth_scheme="oauth",
+        oauth_beta=ANTHROPIC_OAUTH_BETA,
+        capabilities=(
+            "chat",
+            "streaming",
+            "tools",
+            "thinking",
+            "native_anthropic",
+            "oauth",
+            "rate_limit",
+        ),
+    ),
     "nvidia_nim": ProviderDescriptor(
         provider_id="nvidia_nim",
         transport_type="openai_chat",
@@ -71,6 +116,8 @@ PROVIDER_CATALOG: dict[str, ProviderDescriptor] = {
         credential_env="OPENROUTER_API_KEY",
         credential_url="https://openrouter.ai/keys",
         credential_attr="open_router_api_key",
+        oauth_env="OPENROUTER_OAUTH_TOKEN",
+        oauth_attr="open_router_oauth_token",
         default_base_url=OPENROUTER_DEFAULT_BASE,
         proxy_attr="open_router_proxy",
         capabilities=("chat", "streaming", "tools", "thinking", "native_anthropic"),
@@ -91,6 +138,8 @@ PROVIDER_CATALOG: dict[str, ProviderDescriptor] = {
         credential_env="DEEPSEEK_API_KEY",
         credential_url="https://platform.deepseek.com/api_keys",
         credential_attr="deepseek_api_key",
+        oauth_env="DEEPSEEK_OAUTH_TOKEN",
+        oauth_attr="deepseek_oauth_token",
         default_base_url=DEEPSEEK_ANTHROPIC_DEFAULT_BASE,
         capabilities=("chat", "streaming", "tools", "thinking", "native_anthropic"),
     ),
@@ -140,6 +189,8 @@ PROVIDER_CATALOG: dict[str, ProviderDescriptor] = {
         credential_env="WAFER_API_KEY",
         credential_url="https://www.wafer.ai/pass",
         credential_attr="wafer_api_key",
+        oauth_env="WAFER_OAUTH_TOKEN",
+        oauth_attr="wafer_oauth_token",
         default_base_url=WAFER_DEFAULT_BASE,
         proxy_attr="wafer_proxy",
         capabilities=("chat", "streaming", "tools", "thinking", "native_anthropic"),
@@ -150,6 +201,8 @@ PROVIDER_CATALOG: dict[str, ProviderDescriptor] = {
         credential_env="KIMI_API_KEY",
         credential_url="https://platform.moonshot.cn/console/api-keys",
         credential_attr="kimi_api_key",
+        oauth_env="KIMI_OAUTH_TOKEN",
+        oauth_attr="kimi_oauth_token",
         default_base_url=KIMI_DEFAULT_BASE,
         proxy_attr="kimi_proxy",
         capabilities=(
@@ -186,6 +239,8 @@ PROVIDER_CATALOG: dict[str, ProviderDescriptor] = {
         credential_env="FIREWORKS_API_KEY",
         credential_url="https://fireworks.ai/account/api-keys",
         credential_attr="fireworks_api_key",
+        oauth_env="FIREWORKS_OAUTH_TOKEN",
+        oauth_attr="fireworks_oauth_token",
         default_base_url=FIREWORKS_DEFAULT_BASE,
         proxy_attr="fireworks_proxy",
         capabilities=(
@@ -202,6 +257,8 @@ PROVIDER_CATALOG: dict[str, ProviderDescriptor] = {
         transport_type="anthropic_messages",
         credential_env="ZAI_API_KEY",
         credential_attr="zai_api_key",
+        oauth_env="ZAI_OAUTH_TOKEN",
+        oauth_attr="zai_oauth_token",
         default_base_url=ZAI_DEFAULT_BASE,
         proxy_attr="zai_proxy",
         capabilities=(

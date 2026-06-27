@@ -118,6 +118,20 @@ SECTIONS: tuple[ConfigSectionSpec, ...] = (
 
 FIELDS: tuple[ConfigFieldSpec, ...] = (
     ConfigFieldSpec(
+        "ANTHROPIC_OAUTH_TOKEN",
+        "Anthropic Account Token (setup-token)",
+        "providers",
+        "secret",
+        settings_attr="anthropic_oauth_token",
+        secret=True,
+        description=(
+            "Claude account OAuth access token from `claude setup-token` (Pro/Max "
+            "subscription). Routes to the official Anthropic API instead of a paid "
+            "console API key. Use models prefixed `anthropic/` (e.g. "
+            "anthropic/claude-sonnet-4-6)."
+        ),
+    ),
+    ConfigFieldSpec(
         "NVIDIA_NIM_API_KEY",
         "NVIDIA NIM API Key",
         "providers",
@@ -133,6 +147,16 @@ FIELDS: tuple[ConfigFieldSpec, ...] = (
         "secret",
         settings_attr="open_router_api_key",
         secret=True,
+    ),
+    ConfigFieldSpec(
+        "OPENROUTER_OAUTH_TOKEN",
+        "OpenRouter Account Token",
+        "providers",
+        "secret",
+        settings_attr="open_router_oauth_token",
+        secret=True,
+        advanced=True,
+        description="Optional account/OAuth token; used instead of the API key above when set.",
     ),
     ConfigFieldSpec(
         "MISTRAL_API_KEY",
@@ -166,6 +190,16 @@ FIELDS: tuple[ConfigFieldSpec, ...] = (
         secret=True,
     ),
     ConfigFieldSpec(
+        "DEEPSEEK_OAUTH_TOKEN",
+        "DeepSeek Account Token",
+        "providers",
+        "secret",
+        settings_attr="deepseek_oauth_token",
+        secret=True,
+        advanced=True,
+        description="Optional account/OAuth token; used instead of the API key above when set.",
+    ),
+    ConfigFieldSpec(
         "KIMI_API_KEY",
         "Kimi API Key",
         "providers",
@@ -174,12 +208,32 @@ FIELDS: tuple[ConfigFieldSpec, ...] = (
         secret=True,
     ),
     ConfigFieldSpec(
+        "KIMI_OAUTH_TOKEN",
+        "Kimi Account Token",
+        "providers",
+        "secret",
+        settings_attr="kimi_oauth_token",
+        secret=True,
+        advanced=True,
+        description="Optional account/OAuth token; used instead of the API key above when set.",
+    ),
+    ConfigFieldSpec(
         "WAFER_API_KEY",
         "Wafer API Key",
         "providers",
         "secret",
         settings_attr="wafer_api_key",
         secret=True,
+    ),
+    ConfigFieldSpec(
+        "WAFER_OAUTH_TOKEN",
+        "Wafer Account Token",
+        "providers",
+        "secret",
+        settings_attr="wafer_oauth_token",
+        secret=True,
+        advanced=True,
+        description="Optional account/OAuth token; used instead of the API key above when set.",
     ),
     ConfigFieldSpec(
         "OPENCODE_API_KEY",
@@ -203,6 +257,16 @@ FIELDS: tuple[ConfigFieldSpec, ...] = (
         description="Z.ai Coding Plan API key.",
     ),
     ConfigFieldSpec(
+        "ZAI_OAUTH_TOKEN",
+        "Z.ai Account Token",
+        "providers",
+        "secret",
+        settings_attr="zai_oauth_token",
+        secret=True,
+        advanced=True,
+        description="Optional account/OAuth token; used instead of the API key above when set.",
+    ),
+    ConfigFieldSpec(
         "FIREWORKS_API_KEY",
         "Fireworks API Key",
         "providers",
@@ -210,6 +274,16 @@ FIELDS: tuple[ConfigFieldSpec, ...] = (
         settings_attr="fireworks_api_key",
         secret=True,
         description="Fireworks AI inference API key.",
+    ),
+    ConfigFieldSpec(
+        "FIREWORKS_OAUTH_TOKEN",
+        "Fireworks Account Token",
+        "providers",
+        "secret",
+        settings_attr="fireworks_oauth_token",
+        secret=True,
+        advanced=True,
+        description="Optional account/OAuth token; used instead of the API key above when set.",
     ),
     ConfigFieldSpec(
         "GEMINI_API_KEY",
@@ -271,6 +345,15 @@ FIELDS: tuple[ConfigFieldSpec, ...] = (
         "providers",
         settings_attr="ollama_base_url",
         default="http://localhost:11434",
+    ),
+    ConfigFieldSpec(
+        "ANTHROPIC_PROXY",
+        "Anthropic Proxy",
+        "providers",
+        "secret",
+        settings_attr="anthropic_proxy",
+        secret=True,
+        advanced=True,
     ),
     ConfigFieldSpec(
         "NVIDIA_NIM_PROXY",
