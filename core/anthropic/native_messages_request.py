@@ -10,6 +10,14 @@ from typing import Any
 
 from pydantic import BaseModel
 
+# Anthropic extended-thinking constraints: 1024 <= budget_tokens < max_tokens.
+# When a routed request enables thinking but omits (or under-specifies) the
+# budget, fall back to a sane default instead of emitting an invalid
+# ``{"type": "enabled"}`` block (which Anthropic rejects with HTTP 400
+# "thinking.enabled.budget_tokens: Field required").
+MIN_THINKING_BUDGET_TOKENS = 1024
+DEFAULT_THINKING_BUDGET_TOKENS = 16384
+
 _REQUEST_FIELDS = (
     "model",
     "messages",
@@ -226,11 +234,24 @@ def build_base_native_anthropic_request_body(
     if "thinking" in body:
         thinking_cfg = body.pop("thinking")
         if thinking_enabled and isinstance(thinking_cfg, dict):
-            thinking_payload: dict[str, Any] = {"type": "enabled"}
-            budget_tokens = thinking_cfg.get("budget_tokens")
-            if isinstance(budget_tokens, int):
-                thinking_payload["budget_tokens"] = budget_tokens
-            body["thinking"] = thinking_payload
+            # ``budget_tokens`` must be < the request's max_tokens, so resolve the
+            # effective max before clamping (max_tokens may not be set yet here).
+            effective_max = body.get("max_tokens")
+            if not isinstance(effective_max, int) or effective_max <= 0:
+                effective_max = default_max_tokens
+            if effective_max > MIN_THINKING_BUDGET_TOKENS:
+                budget_tokens = thinking_cfg.get("budget_tokens")
+                if not isinstance(budget_tokens, int):
+                    budget_tokens = DEFAULT_THINKING_BUDGET_TOKENS
+                budget_tokens = max(
+                    MIN_THINKING_BUDGET_TOKENS,
+                    min(budget_tokens, effective_max - 1),
+                )
+                body["thinking"] = {
+                    "type": "enabled",
+                    "budget_tokens": budget_tokens,
+                }
+            # else: max_tokens too small for any valid budget -> omit thinking
 
     if "max_tokens" not in body:
         body["max_tokens"] = default_max_tokens
