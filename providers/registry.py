@@ -350,8 +350,12 @@ def _referenced_provider_ids(settings: Settings) -> frozenset[str]:
 def _model_list_provider_ids_for_settings(settings: Settings) -> tuple[str, ...]:
     """Return providers worth discovering for this process configuration."""
     referenced_provider_ids = _referenced_provider_ids(settings)
+    menu_allowlist = settings.model_menu_provider_allowlist()
     provider_ids: list[str] = []
     for provider_id, descriptor in PROVIDER_DESCRIPTORS.items():
+        # Skip providers excluded from the model menu (saves discovery queries).
+        if menu_allowlist is not None and provider_id not in menu_allowlist:
+            continue
         # Providers that self-source a token at runtime (static credential or a
         # browser-login file) are only worth querying when actually referenced.
         if descriptor.static_credential is not None or descriptor.credential_optional:

@@ -30,6 +30,7 @@ _RUNTIME_EXTRAS = {
     "log_raw_cli_diagnostics": False,
     "log_messaging_error_details": False,
     "configured_chat_model_refs": lambda: (),
+    "model_menu_provider_allowlist": lambda: None,
 }
 
 

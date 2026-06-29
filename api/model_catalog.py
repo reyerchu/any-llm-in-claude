@@ -70,8 +70,14 @@ def build_models_list_response(
             supports_thinking=supports_thinking,
         )
 
+    menu_allowlist = settings.model_menu_provider_allowlist()
     if provider_registry is not None:
         for model_info in provider_registry.cached_prefixed_model_infos():
+            if (
+                menu_allowlist is not None
+                and model_info.model_id.split("/", 1)[0] not in menu_allowlist
+            ):
+                continue
             _append_provider_model_variants(
                 models,
                 seen,

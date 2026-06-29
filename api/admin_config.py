@@ -517,6 +517,16 @@ FIELDS: tuple[ConfigFieldSpec, ...] = (
         description="Optional provider/model route for Haiku requests.",
     ),
     ConfigFieldSpec(
+        "MODEL_MENU_PROVIDERS",
+        "Model Menu Providers",
+        "models",
+        settings_attr="model_menu_providers",
+        description=(
+            "Comma-separated allowlist of provider ids shown in the model menu. "
+            "Blank lists all configured providers."
+        ),
+    ),
+    ConfigFieldSpec(
         "ENABLE_MODEL_THINKING",
         "Enable Thinking",
         "thinking",

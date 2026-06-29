@@ -197,6 +197,13 @@ class Settings(BaseSettings):
     model_sonnet: str | None = Field(default=None, validation_alias="MODEL_SONNET")
     model_haiku: str | None = Field(default=None, validation_alias="MODEL_HAIKU")
 
+    # Allowlist of provider ids whose discovered models appear in the /model menu
+    # (comma-separated). Blank = list every configured provider. The routed
+    # MODEL/MODEL_* targets and the built-in Claude models are always listed.
+    model_menu_providers: str = Field(
+        default="", validation_alias="MODEL_MENU_PROVIDERS"
+    )
+
     # ==================== Per-Provider Proxy ====================
     anthropic_proxy: str = Field(default="", validation_alias="ANTHROPIC_PROXY")
     nvidia_nim_proxy: str = Field(default="", validation_alias="NVIDIA_NIM_PROXY")
@@ -561,6 +568,15 @@ class Settings(BaseSettings):
             for part in self.web_fetch_allowed_schemes.split(",")
             if part.strip()
         )
+
+    def model_menu_provider_allowlist(self) -> frozenset[str] | None:
+        """Provider ids allowed in the /model menu, or None for no filtering."""
+        allow = frozenset(
+            part.strip()
+            for part in self.model_menu_providers.split(",")
+            if part.strip()
+        )
+        return allow or None
 
     @staticmethod
     def parse_provider_type(model_string: str) -> str:
