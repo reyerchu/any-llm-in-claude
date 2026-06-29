@@ -569,14 +569,17 @@ class Settings(BaseSettings):
             if part.strip()
         )
 
-    def model_menu_provider_allowlist(self) -> frozenset[str] | None:
-        """Provider ids allowed in the /model menu, or None for no filtering."""
-        allow = frozenset(
+    def model_menu_provider_order(self) -> tuple[str, ...]:
+        """Provider ids for the /model menu in configured order (empty = unset)."""
+        return tuple(
             part.strip()
             for part in self.model_menu_providers.split(",")
             if part.strip()
         )
-        return allow or None
+
+    def model_menu_provider_allowlist(self) -> frozenset[str] | None:
+        """Provider ids allowed in the /model menu, or None for no filtering."""
+        return frozenset(self.model_menu_provider_order()) or None
 
     @staticmethod
     def parse_provider_type(model_string: str) -> str:

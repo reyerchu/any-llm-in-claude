@@ -61,6 +61,40 @@ def test_menu_filters_discovered_providers_keeps_routes_and_claude(monkeypatch):
     assert "claude-opus-4-20250514" in ids
 
 
+def test_menu_excludes_routed_ref_when_provider_not_allowed(monkeypatch):
+    monkeypatch.setenv("MODEL", "kimi_code/kimi-for-coding")
+    monkeypatch.setenv("MODEL_OPUS", "anthropic/claude-opus-4-8")
+    monkeypatch.setenv("MODEL_MENU_PROVIDERS", "kimi_code,freellm")
+    resp = build_models_list_response(Settings(), _FakeRegistry([]))
+    names = [m.display_name for m in resp.data]
+    ids = {m.id for m in resp.data}
+
+    # anthropic dropped from the menu even though it is a routed MODEL_OPUS target
+    assert not any("anthropic/claude-opus-4-8" in n for n in names)
+    # kimi_code route still listed; built-in Claude still available
+    assert any(n.startswith("kimi_code/kimi-for-coding") for n in names)
+    assert "claude-opus-4-20250514" in ids
+
+
+def test_menu_order_claude_then_providers_in_configured_order(monkeypatch):
+    monkeypatch.setenv("MODEL", "kimi_code/kimi-for-coding")
+    monkeypatch.setenv("MODEL_MENU_PROVIDERS", "kimi_code,freellm")
+    registry = _FakeRegistry(
+        [
+            ProviderModelInfo("freellm/auto", supports_thinking=True),
+            ProviderModelInfo("kimi_code/kimi-for-coding", supports_thinking=True),
+        ]
+    )
+    resp = build_models_list_response(Settings(), registry)
+
+    # built-in Claude leads the menu
+    assert resp.data[0].id == "claude-opus-4-20250514"
+    names = [m.display_name for m in resp.data]
+    first_kimi = next(i for i, n in enumerate(names) if n.startswith("kimi_code/"))
+    first_freellm = next(i for i, n in enumerate(names) if n.startswith("freellm/"))
+    assert first_kimi < first_freellm
+
+
 def test_menu_no_allowlist_lists_all_discovered(monkeypatch):
     monkeypatch.setenv("MODEL", "kimi_code/kimi-for-coding")
     monkeypatch.setenv("MODEL_MENU_PROVIDERS", "")

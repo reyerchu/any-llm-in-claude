@@ -53,40 +53,59 @@ SUPPORTED_CLAUDE_MODELS = [
 def build_models_list_response(
     settings: Settings, provider_registry: ProviderRegistry | None
 ) -> ModelsListResponse:
-    """Return configured, cached, and compatibility model ids."""
+    """Return configured, cached, and compatibility model ids.
+
+    With ``MODEL_MENU_PROVIDERS`` set, only the listed providers' routed and
+    discovered models are surfaced, the built-in Claude models lead the menu,
+    and provider entries follow in the configured order. With it unset, the
+    historical order is preserved (routed + discovered, then Claude last) and no
+    provider is filtered out.
+    """
     models: list[ModelResponse] = []
     seen: set[str] = set()
+    allowlist = settings.model_menu_provider_allowlist()
+    order = settings.model_menu_provider_order()
 
+    # (provider_id, model_ref, supports_thinking) for routed + discovered models.
+    entries: list[tuple[str, str, bool | None]] = []
     for ref in settings.configured_chat_model_refs():
+        if allowlist is not None and ref.provider_id not in allowlist:
+            continue
         supports_thinking = None
         if provider_registry is not None:
             supports_thinking = provider_registry.cached_model_supports_thinking(
                 ref.provider_id, ref.model_id
             )
-        _append_provider_model_variants(
-            models,
-            seen,
-            ref.model_ref,
-            supports_thinking=supports_thinking,
-        )
-
-    menu_allowlist = settings.model_menu_provider_allowlist()
+        entries.append((ref.provider_id, ref.model_ref, supports_thinking))
     if provider_registry is not None:
         for model_info in provider_registry.cached_prefixed_model_infos():
-            if (
-                menu_allowlist is not None
-                and model_info.model_id.split("/", 1)[0] not in menu_allowlist
-            ):
+            provider_id = model_info.model_id.split("/", 1)[0]
+            if allowlist is not None and provider_id not in allowlist:
                 continue
-            _append_provider_model_variants(
-                models,
-                seen,
-                model_info.model_id,
-                supports_thinking=model_info.supports_thinking,
+            entries.append(
+                (provider_id, model_info.model_id, model_info.supports_thinking)
             )
 
-    for model in SUPPORTED_CLAUDE_MODELS:
-        _append_unique_model(models, seen, model)
+    def _emit_entries() -> None:
+        for _provider_id, model_ref, supports_thinking in entries:
+            _append_provider_model_variants(
+                models, seen, model_ref, supports_thinking=supports_thinking
+            )
+
+    def _emit_claude() -> None:
+        for model in SUPPORTED_CLAUDE_MODELS:
+            _append_unique_model(models, seen, model)
+
+    if order:
+        # Built-in Claude first, then provider entries grouped in configured order
+        # (stable sort keeps routed-before-discovered within each provider).
+        rank = {provider_id: i for i, provider_id in enumerate(order)}
+        entries.sort(key=lambda e: rank.get(e[0], len(order)))
+        _emit_claude()
+        _emit_entries()
+    else:
+        _emit_entries()
+        _emit_claude()
 
     return ModelsListResponse(
         data=models,
