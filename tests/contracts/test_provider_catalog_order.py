@@ -7,6 +7,7 @@ from config.provider_catalog import PROVIDER_CATALOG, SUPPORTED_PROVIDER_IDS
 _EXPECTED_PROVIDER_ORDER: tuple[str, ...] = (
     "anthropic",
     "nvidia_nim",
+    "freellm",
     "open_router",
     "gemini",
     "deepseek",

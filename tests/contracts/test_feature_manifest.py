@@ -9,6 +9,7 @@ from providers.cerebras import CerebrasProvider
 from providers.codestral import CodestralProvider
 from providers.deepseek import DeepSeekProvider
 from providers.fireworks import FireworksProvider
+from providers.freellm import FreeLlmProvider
 from providers.gemini import GeminiProvider
 from providers.groq import GroqProvider
 from providers.kimi import KimiProvider
@@ -78,6 +79,7 @@ def test_product_coverage_is_not_satisfied_by_prereq_probes() -> None:
 def test_provider_and_platform_registries_include_advertised_builtins() -> None:
     provider_classes = {
         "nvidia_nim": NvidiaNimProvider,
+        "freellm": FreeLlmProvider,
         "open_router": OpenRouterProvider,
         "mistral": MistralProvider,
         "mistral_codestral": CodestralProvider,

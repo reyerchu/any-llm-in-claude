@@ -61,6 +61,10 @@ ZAI_DEFAULT_BASE = "https://api.z.ai/api/anthropic/v1"
 GEMINI_DEFAULT_BASE = "https://generativelanguage.googleapis.com/v1beta/openai/"
 GROQ_DEFAULT_BASE = "https://api.groq.com/openai/v1"
 CEREBRAS_DEFAULT_BASE = "https://api.cerebras.ai/v1"
+# FreeLLMAPI (https://github.com/tashfeenahmed/freellmapi) — OpenAI-compatible
+# unified proxy that rotates the free tiers of 16 LLM providers behind one
+# /v1 endpoint. Local instance defaults to http://localhost:3001/v1.
+FREELLM_DEFAULT_BASE = "http://localhost:3001/v1"
 
 
 @dataclass(frozen=True, slots=True)
@@ -126,6 +130,16 @@ PROVIDER_CATALOG: dict[str, ProviderDescriptor] = {
         credential_attr="nvidia_nim_api_key",
         default_base_url=NVIDIA_NIM_DEFAULT_BASE,
         proxy_attr="nvidia_nim_proxy",
+        capabilities=("chat", "streaming", "tools", "thinking", "rate_limit"),
+    ),
+    "freellm": ProviderDescriptor(
+        provider_id="freellm",
+        transport_type="openai_chat",
+        credential_env="FREELLM_API_KEY",
+        credential_url="http://localhost:3001/keys",
+        credential_attr="freellm_api_key",
+        default_base_url=FREELLM_DEFAULT_BASE,
+        proxy_attr="freellm_proxy",
         capabilities=("chat", "streaming", "tools", "thinking", "rate_limit"),
     ),
     "open_router": ProviderDescriptor(

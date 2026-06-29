@@ -12,6 +12,7 @@ from providers.codestral import CodestralProvider
 from providers.deepseek import DeepSeekProvider
 from providers.exceptions import UnknownProviderTypeError
 from providers.fireworks import FireworksProvider
+from providers.freellm import FreeLlmProvider
 from providers.gemini import GeminiProvider
 from providers.groq import GroqProvider
 from providers.kimi import KimiProvider
@@ -170,9 +171,11 @@ def test_create_provider_instantiates_each_builtin():
         cerebras_api_key="test_cerebras_key",
         fireworks_api_key="test_fireworks_key",
         kimi_api_key="test_kimi_key",
+        freellm_api_key="test_freellm_key",
     )
     cases = {
         "nvidia_nim": NvidiaNimProvider,
+        "freellm": FreeLlmProvider,
         "mistral": MistralProvider,
         "mistral_codestral": CodestralProvider,
         "deepseek": DeepSeekProvider,

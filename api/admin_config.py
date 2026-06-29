@@ -127,6 +127,18 @@ FIELDS: tuple[ConfigFieldSpec, ...] = (
         description="Used by NVIDIA NIM chat and optional NIM voice transcription.",
     ),
     ConfigFieldSpec(
+        "FREELLM_API_KEY",
+        "FreeLLMAPI Key",
+        "providers",
+        "secret",
+        settings_attr="freellm_api_key",
+        secret=True,
+        description=(
+            "Unified API key for a local tashfeenahmed/freellmapi proxy "
+            "(default base http://localhost:3001/v1)."
+        ),
+    ),
+    ConfigFieldSpec(
         "OPENROUTER_API_KEY",
         "OpenRouter API Key",
         "providers",
@@ -337,6 +349,15 @@ FIELDS: tuple[ConfigFieldSpec, ...] = (
         "providers",
         "secret",
         settings_attr="nvidia_nim_proxy",
+        secret=True,
+        advanced=True,
+    ),
+    ConfigFieldSpec(
+        "FREELLM_PROXY",
+        "FreeLLMAPI Proxy",
+        "providers",
+        "secret",
+        settings_attr="freellm_proxy",
         secret=True,
         advanced=True,
     ),

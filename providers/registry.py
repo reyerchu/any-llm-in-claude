@@ -150,6 +150,12 @@ def _create_cerebras(config: ProviderConfig, _settings: Settings) -> BaseProvide
     return CerebrasProvider(config)
 
 
+def _create_freellm(config: ProviderConfig, _settings: Settings) -> BaseProvider:
+    from providers.freellm import FreeLlmProvider
+
+    return FreeLlmProvider(config)
+
+
 PROVIDER_FACTORIES: dict[str, ProviderFactory] = {
     "anthropic": _create_anthropic,
     "nvidia_nim": _create_nvidia_nim,
@@ -164,6 +170,7 @@ PROVIDER_FACTORIES: dict[str, ProviderFactory] = {
     "kimi": _create_kimi,
     "kimi_code": _create_kimi_code,
     "cerebras": _create_cerebras,
+    "freellm": _create_freellm,
     "groq": _create_groq,
     "fireworks": _create_fireworks,
     "zai": _create_zai,
