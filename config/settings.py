@@ -237,6 +237,12 @@ class Settings(BaseSettings):
         default=None, validation_alias="ENABLE_HAIKU_THINKING"
     )
 
+    # Enable the 1M-token context window on the Anthropic subscription provider
+    # (adds the ``context-1m-2025-08-07`` beta). Off by default.
+    anthropic_context_1m: bool = Field(
+        default=False, validation_alias="ANTHROPIC_CONTEXT_1M"
+    )
+
     # ==================== HTTP Client Timeouts ====================
     http_read_timeout: float = Field(
         default=120.0, validation_alias="HTTP_READ_TIMEOUT"

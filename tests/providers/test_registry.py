@@ -5,7 +5,12 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from config.nim import NimSettings
-from config.provider_catalog import PROVIDER_CATALOG, ZAI_DEFAULT_BASE
+from config.provider_catalog import (
+    ANTHROPIC_CONTEXT_1M_BETA,
+    ANTHROPIC_OAUTH_BETA,
+    PROVIDER_CATALOG,
+    ZAI_DEFAULT_BASE,
+)
 from config.provider_ids import SUPPORTED_PROVIDER_IDS
 from providers.cerebras import CerebrasProvider
 from providers.codestral import CodestralProvider
@@ -68,6 +73,9 @@ def _make_settings(**overrides):
     mock.groq_proxy = ""
     mock.cerebras_api_key = ""
     mock.cerebras_proxy = ""
+    mock.anthropic_oauth_token = "sk-ant-oat-test"
+    mock.anthropic_proxy = ""
+    mock.anthropic_context_1m = False
     mock.provider_rate_limit = 40
     mock.provider_rate_window = 60
     mock.provider_max_concurrency = 5
@@ -155,6 +163,31 @@ def test_build_provider_config_opencode_go_uses_opencode_api_key() -> None:
     config = build_provider_config(descriptor, settings)
 
     assert config.api_key == "shared-opencode-token"
+
+
+def test_anthropic_context_1m_beta_appended_when_enabled():
+    descriptor = PROVIDER_CATALOG["anthropic"]
+
+    on = build_provider_config(descriptor, _make_settings(anthropic_context_1m=True))
+    assert on.oauth_beta == f"{ANTHROPIC_OAUTH_BETA},{ANTHROPIC_CONTEXT_1M_BETA}"
+
+
+def test_anthropic_context_1m_beta_absent_when_disabled():
+    descriptor = PROVIDER_CATALOG["anthropic"]
+
+    off = build_provider_config(descriptor, _make_settings(anthropic_context_1m=False))
+    assert off.oauth_beta == ANTHROPIC_OAUTH_BETA
+
+
+def test_context_1m_not_added_to_provider_without_support():
+    # kimi_code reuses the same oauth beta string but must NOT get the 1M beta.
+    descriptor = PROVIDER_CATALOG["kimi_code"]
+    assert descriptor.supports_context_1m is False
+
+    config = build_provider_config(
+        descriptor, _make_settings(anthropic_context_1m=True)
+    )
+    assert config.oauth_beta == ANTHROPIC_OAUTH_BETA
 
 
 def test_create_provider_uses_native_openrouter_by_default():

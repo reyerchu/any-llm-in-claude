@@ -11,6 +11,7 @@ import httpx
 from loguru import logger
 
 from config.provider_catalog import (
+    ANTHROPIC_CONTEXT_1M_BETA,
     PROVIDER_CATALOG,
     SUPPORTED_PROVIDER_IDS,
     ProviderDescriptor,
@@ -267,11 +268,18 @@ def build_provider_config(
         settings, descriptor.base_url_attr, descriptor.default_base_url or ""
     )
     proxy = _string_attr(settings, descriptor.proxy_attr)
+    oauth_beta = descriptor.oauth_beta if auth_scheme == "oauth" else None
+    if (
+        oauth_beta is not None
+        and descriptor.supports_context_1m
+        and settings.anthropic_context_1m
+    ):
+        oauth_beta = f"{oauth_beta},{ANTHROPIC_CONTEXT_1M_BETA}"
     return ProviderConfig(
         api_key=credential,
         base_url=base_url or descriptor.default_base_url,
         auth_scheme=auth_scheme,
-        oauth_beta=descriptor.oauth_beta if auth_scheme == "oauth" else None,
+        oauth_beta=oauth_beta,
         rate_limit=settings.provider_rate_limit,
         rate_window=settings.provider_rate_window,
         max_concurrency=settings.provider_max_concurrency,

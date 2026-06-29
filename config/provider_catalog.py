@@ -19,6 +19,9 @@ AuthScheme = Literal["api_key", "oauth"]
 # OAuth beta flag Anthropic requires when authenticating with a subscription
 # (``claude setup-token`` / ``claude /login``) access token instead of an API key.
 ANTHROPIC_OAUTH_BETA = "oauth-2025-04-20"
+# Optional beta enabling the 1M-token context window on the Anthropic provider.
+# Off by default; toggled per instance via the ``ANTHROPIC_CONTEXT_1M`` setting.
+ANTHROPIC_CONTEXT_1M_BETA = "context-1m-2025-08-07"
 # Anthropic OAuth refresh endpoint + public Claude Code client id (used to refresh
 # the access token the ``claude`` CLI stores after a browser ``/login``).
 ANTHROPIC_OAUTH_TOKEN_URL = "https://platform.claude.com/v1/oauth/token"
@@ -92,6 +95,9 @@ class ProviderDescriptor:
     auth_scheme: AuthScheme = "api_key"
     # ``anthropic-beta`` flag to add when authenticating via an OAuth account token.
     oauth_beta: str | None = None
+    # When True, the provider can opt into the 1M-token context window beta
+    # (gated by the ``anthropic_context_1m`` setting).
+    supports_context_1m: bool = False
     # When True, an empty configured credential is allowed because the provider
     # sources its token elsewhere at runtime (e.g. reads a browser-login file).
     credential_optional: bool = False
@@ -112,6 +118,7 @@ PROVIDER_CATALOG: dict[str, ProviderDescriptor] = {
         proxy_attr="anthropic_proxy",
         auth_scheme="oauth",
         oauth_beta=ANTHROPIC_OAUTH_BETA,
+        supports_context_1m=True,
         capabilities=(
             "chat",
             "streaming",

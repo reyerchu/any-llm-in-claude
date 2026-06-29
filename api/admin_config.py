@@ -549,6 +549,15 @@ FIELDS: tuple[ConfigFieldSpec, ...] = (
         description="Blank inherits Enable Thinking.",
     ),
     ConfigFieldSpec(
+        "ANTHROPIC_CONTEXT_1M",
+        "Anthropic 1M Context",
+        "thinking",
+        "boolean",
+        settings_attr="anthropic_context_1m",
+        default="false",
+        description="Enable the 1M-token context window on the Anthropic provider.",
+    ),
+    ConfigFieldSpec(
         "ANTHROPIC_AUTH_TOKEN",
         "API/CLI Auth Token",
         "runtime",
