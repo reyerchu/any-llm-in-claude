@@ -35,6 +35,18 @@ from .stream import AnthropicMessagesStreamRunner
 StreamChunkMode = Literal["line", "event"]
 
 
+def _merge_anthropic_betas(headers: dict[str, str], betas: Any) -> None:
+    """Merge ``betas`` into the request's ``anthropic-beta`` header, de-duplicated."""
+    if not betas:
+        return
+    existing = headers.get("anthropic-beta")
+    parts = [b for b in (existing, *betas) if b]
+    if parts:
+        headers["anthropic-beta"] = ",".join(
+            dict.fromkeys(",".join(parts).split(","))
+        )
+
+
 class AnthropicMessagesTransport(BaseProvider):
     """Base class for providers that stream from an Anthropic-compatible endpoint."""
 
@@ -112,11 +124,7 @@ class AnthropicMessagesTransport(BaseProvider):
         result.pop("x-api-key", None)
         result["Authorization"] = f"Bearer {self._api_key}"
         if self._oauth_beta:
-            existing = result.get("anthropic-beta")
-            betas = [b for b in (existing, self._oauth_beta) if b]
-            result["anthropic-beta"] = ",".join(
-                dict.fromkeys(",".join(betas).split(","))
-            )
+            _merge_anthropic_betas(result, (self._oauth_beta,))
         return result
 
     def _extract_model_ids_from_model_list_payload(
@@ -157,13 +165,27 @@ class AnthropicMessagesTransport(BaseProvider):
             thinking_enabled=thinking_enabled,
         )
 
+    def _body_required_betas(self, body: Any) -> tuple[str, ...]:
+        """``anthropic-beta`` flags needed to authorize beta-gated body fields.
+
+        The native body builder forwards beta-gated fields (e.g.
+        ``context_management``) but the request headers are reconstructed
+        statically, so the beta that authorizes the field would otherwise be
+        dropped — Anthropic then rejects the field with HTTP 400
+        "Extra inputs are not permitted". Subclasses return the betas matching
+        whatever beta-gated fields they forward. Default: none.
+        """
+        return ()
+
     async def _send_stream_request(self, body: dict) -> httpx.Response:
         """Create a streaming messages response."""
+        headers = self._apply_oauth_headers(self._request_headers())
+        _merge_anthropic_betas(headers, self._body_required_betas(body))
         request = self._client.build_request(
             "POST",
             "/messages",
             json=body,
-            headers=self._apply_oauth_headers(self._request_headers()),
+            headers=headers,
         )
         return await self._client.send(request, stream=True)
 

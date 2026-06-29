@@ -26,6 +26,11 @@ from .request import build_request_body
 
 _ANTHROPIC_VERSION = "2023-06-01"
 
+# Beta required to authorize the ``context_management`` request field. Claude Code
+# sends it alongside the field; the proxy must re-add it (the field is forwarded in
+# the body but the client's anthropic-beta header is not).
+_CONTEXT_MANAGEMENT_BETA = "context-management-2025-06-27"
+
 
 class AnthropicProvider(AnthropicMessagesTransport):
     """Official Anthropic Messages provider on a Claude subscription OAuth token."""
@@ -57,6 +62,11 @@ class AnthropicProvider(AnthropicMessagesTransport):
             request,
             thinking_enabled=self._is_thinking_enabled(request, thinking_enabled),
         )
+
+    def _body_required_betas(self, body: Any) -> tuple[str, ...]:
+        if isinstance(body, dict) and body.get("context_management") is not None:
+            return (_CONTEXT_MANAGEMENT_BETA,)
+        return ()
 
     def _request_headers(self) -> dict[str, str]:
         # ``Authorization`` + ``anthropic-beta`` are added by the transport's OAuth

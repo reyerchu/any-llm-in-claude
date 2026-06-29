@@ -13,6 +13,7 @@ from api.models.anthropic import (
 )
 from config.constants import ANTHROPIC_DEFAULT_MAX_OUTPUT_TOKENS
 from core.anthropic.native_messages_request import (
+    DEFAULT_THINKING_BUDGET_TOKENS,
     build_base_native_anthropic_request_body,
 )
 
@@ -202,6 +203,7 @@ def test_enabled_thinking_without_budget_gets_default_budget() -> None:
         req,
         default_max_tokens=ANTHROPIC_DEFAULT_MAX_OUTPUT_TOKENS,
         thinking_enabled=True,
+        default_thinking_budget=DEFAULT_THINKING_BUDGET_TOKENS,
     )
     assert body["thinking"]["type"] == "enabled"
     assert isinstance(body["thinking"]["budget_tokens"], int)
@@ -221,6 +223,7 @@ def test_enabled_thinking_keeps_client_budget() -> None:
         req,
         default_max_tokens=ANTHROPIC_DEFAULT_MAX_OUTPUT_TOKENS,
         thinking_enabled=True,
+        default_thinking_budget=DEFAULT_THINKING_BUDGET_TOKENS,
     )
     assert body["thinking"] == {"type": "enabled", "budget_tokens": 2048}
 
@@ -237,6 +240,7 @@ def test_enabled_thinking_budget_clamped_below_max_tokens() -> None:
         req,
         default_max_tokens=ANTHROPIC_DEFAULT_MAX_OUTPUT_TOKENS,
         thinking_enabled=True,
+        default_thinking_budget=DEFAULT_THINKING_BUDGET_TOKENS,
     )
     assert body["thinking"]["budget_tokens"] == 4095  # max_tokens - 1
 
@@ -253,6 +257,7 @@ def test_enabled_thinking_omitted_when_max_tokens_too_small() -> None:
         req,
         default_max_tokens=ANTHROPIC_DEFAULT_MAX_OUTPUT_TOKENS,
         thinking_enabled=True,
+        default_thinking_budget=DEFAULT_THINKING_BUDGET_TOKENS,
     )
     assert "thinking" not in body
 
@@ -271,6 +276,24 @@ def test_thinking_dropped_when_disabled_by_config() -> None:
         thinking_enabled=False,
     )
     assert "thinking" not in body
+
+
+def test_enabled_thinking_default_none_emits_bare_block() -> None:
+    """Local Anthropic-compatible callers (default_thinking_budget=None) keep the
+    long-standing bare ``{"type": "enabled"}`` pass-through behavior."""
+    raw = {
+        "model": "m",
+        "max_tokens": 4096,
+        "messages": [{"role": "user", "content": "x"}],
+        "thinking": {"type": "enabled"},
+    }
+    req = MessagesRequest.model_validate(raw)
+    body = build_base_native_anthropic_request_body(
+        req,
+        default_max_tokens=ANTHROPIC_DEFAULT_MAX_OUTPUT_TOKENS,
+        thinking_enabled=True,
+    )
+    assert body["thinking"] == {"type": "enabled"}
 
 
 def test_native_body_preserves_context_and_output_config() -> None:

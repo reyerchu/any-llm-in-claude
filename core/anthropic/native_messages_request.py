@@ -225,8 +225,18 @@ def build_base_native_anthropic_request_body(
     *,
     default_max_tokens: int,
     thinking_enabled: bool,
+    default_thinking_budget: int | None = None,
 ) -> dict[str, Any]:
-    """Serialize a Pydantic messages request to a generic native Anthropic body."""
+    """Serialize a Pydantic messages request to a generic native Anthropic body.
+
+    ``default_thinking_budget`` controls the enabled-thinking block when the
+    client supplies no ``budget_tokens``. When ``None`` (default, used by local
+    Anthropic-compatible servers), a bare ``{"type": "enabled"}`` block is
+    emitted — the long-standing pass-through behavior. When set (the official
+    Anthropic endpoint, which REQUIRES a budget and 400s without one), a valid
+    ``budget_tokens`` is always emitted, clamped to ``[1024, max_tokens - 1]``;
+    if ``max_tokens`` is too small for any valid budget, thinking is omitted.
+    """
     body = dump_raw_messages_request(request)
 
     body.pop("extra_body", None)
@@ -234,24 +244,33 @@ def build_base_native_anthropic_request_body(
     if "thinking" in body:
         thinking_cfg = body.pop("thinking")
         if thinking_enabled and isinstance(thinking_cfg, dict):
-            # ``budget_tokens`` must be < the request's max_tokens, so resolve the
-            # effective max before clamping (max_tokens may not be set yet here).
-            effective_max = body.get("max_tokens")
-            if not isinstance(effective_max, int) or effective_max <= 0:
-                effective_max = default_max_tokens
-            if effective_max > MIN_THINKING_BUDGET_TOKENS:
-                budget_tokens = thinking_cfg.get("budget_tokens")
-                if not isinstance(budget_tokens, int):
-                    budget_tokens = DEFAULT_THINKING_BUDGET_TOKENS
-                budget_tokens = max(
-                    MIN_THINKING_BUDGET_TOKENS,
-                    min(budget_tokens, effective_max - 1),
-                )
-                body["thinking"] = {
-                    "type": "enabled",
-                    "budget_tokens": budget_tokens,
-                }
-            # else: max_tokens too small for any valid budget -> omit thinking
+            budget_tokens = thinking_cfg.get("budget_tokens")
+            if default_thinking_budget is None:
+                # Local / pass-through callers: keep the client's block verbatim
+                # (bare enabled, or the supplied budget).
+                thinking_payload: dict[str, Any] = {"type": "enabled"}
+                if isinstance(budget_tokens, int):
+                    thinking_payload["budget_tokens"] = budget_tokens
+                body["thinking"] = thinking_payload
+            else:
+                # Official Anthropic: an enabled block requires a valid budget.
+                # ``budget_tokens`` must be < max_tokens, so resolve the effective
+                # max before clamping (max_tokens may not be set yet here).
+                effective_max = body.get("max_tokens")
+                if not isinstance(effective_max, int) or effective_max <= 0:
+                    effective_max = default_max_tokens
+                if effective_max > MIN_THINKING_BUDGET_TOKENS:
+                    if not isinstance(budget_tokens, int):
+                        budget_tokens = default_thinking_budget
+                    budget_tokens = max(
+                        MIN_THINKING_BUDGET_TOKENS,
+                        min(budget_tokens, effective_max - 1),
+                    )
+                    body["thinking"] = {
+                        "type": "enabled",
+                        "budget_tokens": budget_tokens,
+                    }
+                # else: max_tokens too small for any valid budget -> omit thinking
 
     if "max_tokens" not in body:
         body["max_tokens"] = default_max_tokens
