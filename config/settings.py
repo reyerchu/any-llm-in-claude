@@ -164,6 +164,10 @@ class Settings(BaseSettings):
     # ==================== NVIDIA NIM Config ====================
     nvidia_nim_api_key: str = ""
 
+    # ==================== FreeLLMAPI Config ====================
+    # tashfeenahmed/freellmapi — local Ollama/OpenAI-compatible unified proxy.
+    freellm_api_key: str = ""
+
     # ==================== LM Studio Config ====================
     lm_studio_base_url: str = Field(
         default="http://localhost:1234/v1",
@@ -196,6 +200,7 @@ class Settings(BaseSettings):
     # ==================== Per-Provider Proxy ====================
     anthropic_proxy: str = Field(default="", validation_alias="ANTHROPIC_PROXY")
     nvidia_nim_proxy: str = Field(default="", validation_alias="NVIDIA_NIM_PROXY")
+    freellm_proxy: str = Field(default="", validation_alias="FREELLM_PROXY")
     open_router_proxy: str = Field(default="", validation_alias="OPENROUTER_PROXY")
     mistral_proxy: str = Field(default="", validation_alias="MISTRAL_PROXY")
     codestral_proxy: str = Field(default="", validation_alias="CODESTRAL_PROXY")
